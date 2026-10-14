@@ -1,0 +1,23 @@
+---
+# ============================================================
+# ST2-A-SW1 – Access switch (2960), mot routerne
+# ============================================================
+
+# Management. Satt av Python-scriptet (Vlan20, 10.2.20.11/24, gw 10.2.20.1).
+# Står her kun som dokumentasjon – playbookene RØRER DEN IKKE.
+mgmt_interface: Vlan20
+
+# Routerne har IP rett på porten, så switchportene mot dem er access i VLAN 20
+access_porter:
+  - navn: FastEthernet0/1
+    vlan: 20
+    beskrivelse: "Til ST2-D-RO1 Gi0/0/1"
+  - navn: FastEthernet0/2
+    vlan: 20
+    beskrivelse: "Til ST2-D-RO2 Gi0/1"
+
+trunk_porter:
+  - navn: FastEthernet0/3
+    beskrivelse: "Trunk til ST2-A-SW2 Gi1/0/1"
+
+etherchannel: []   # ingen på denne switchen

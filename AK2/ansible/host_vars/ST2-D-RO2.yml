@@ -1,0 +1,42 @@
+---
+# ============================================================
+# ST2-D-RO2 – Distribution router (2901)
+# ============================================================
+
+# Management-porten mot core. Satt av Python-scriptet.
+# Står her kun som dokumentasjon – playbookene RØRER DEN IKKE.
+mgmt_interface: GigabitEthernet0/0   # 10.2.0.6/30, gateway 10.2.0.5
+
+l3_switch: false
+
+# LAN-porten mot ST2-A-SW1 (VLAN 20)
+rutede_porter:
+  - navn: GigabitEthernet0/1
+    beskrivelse: "Til ST2-A-SW1 Fa0/2 - VLAN 20"
+    ip: 10.2.20.3
+    maske: 255.255.255.0
+
+hsrp:
+  interface: GigabitEthernet0/1
+  gruppe: 20
+  vip: 10.2.20.1
+  prioritet: 100          # standard = Standby
+
+dhcp:
+  pool: VLAN20
+  nett: 10.2.20.0
+  maske: 255.255.255.0
+  gateway: 10.2.20.1
+  # Delt scope: RO2 deler ut .150-.199, resten ekskluderes
+  ekskluder:
+    - { fra: 10.2.20.1,   til: 10.2.20.149 }
+    - { fra: 10.2.20.200, til: 10.2.20.254 }
+
+ospf:
+  router_id: 2.2.2.3
+  nettverk:
+    - { nett: 10.2.0.4,  wildcard: 0.0.0.3 }
+    - { nett: 10.2.20.0, wildcard: 0.0.0.255 }
+  passive_default: false
+  passive_interfaces:
+    - GigabitEthernet0/1

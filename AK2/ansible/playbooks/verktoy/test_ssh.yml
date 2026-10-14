@@ -1,0 +1,19 @@
+---
+# ============================================================
+# Tester at Ansible kommer inn på enhetene over SSH. Endrer ingenting.
+# Alle:        ansible-playbook playbooks/verktoy/test_ssh.yml -k
+# Én enhet:    ansible-playbook playbooks/verktoy/test_ssh.yml -k --limit ST2-D-RO1
+# ============================================================
+- name: Test SSH-tilkobling
+  hosts: stud2
+  gather_facts: false
+
+  tasks:
+    - name: Hent oppetid
+      cisco.ios.ios_command:
+        commands: show version | include uptime
+      register: svar
+
+    - name: Vis svaret
+      ansible.builtin.debug:
+        msg: "{{ svar.stdout[0] }}"

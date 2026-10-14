@@ -1,0 +1,11 @@
+---
+# ============================================================
+# Setter opp hele STUD2-nettverket i riktig rekkefølge:
+#   1. Core (ip routing må være på før vi når routerne)
+#   2. Distribution (HSRP-gatewayen må finnes før vi når access-switchene)
+#   3. Access-switcher
+# Kjør: ansible-playbook site.yml -k   (legg til --check --diff for å se først)
+# ============================================================
+- ansible.builtin.import_playbook: playbooks/core.yml
+- ansible.builtin.import_playbook: playbooks/distribution.yml
+- ansible.builtin.import_playbook: playbooks/access.yml

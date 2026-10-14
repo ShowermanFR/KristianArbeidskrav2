@@ -1,0 +1,31 @@
+---
+# ============================================================
+# ST2-A-SW2 – Access switch (Gig-porter), mot PC-ene og STUD1
+# ============================================================
+
+# Management. Satt av Python-scriptet (Vlan20, 10.2.20.12/24, gw 10.2.20.1).
+# Står her kun som dokumentasjon – playbookene RØRER DEN IKKE.
+mgmt_interface: Vlan20
+
+# MÅ BEKREFTES: hvilken PC-port som er VLAN 20 og hvilken som er VLAN 10
+access_porter:
+  - navn: GigabitEthernet1/0/11
+    vlan: 20
+    beskrivelse: "PC-VLAN20 (STUD2)"
+  - navn: GigabitEthernet1/0/12
+    vlan: 10
+    beskrivelse: "PC-VLAN10 (STUD1)"
+
+trunk_porter:
+  - navn: GigabitEthernet1/0/1
+    beskrivelse: "Trunk til ST2-A-SW1 Fa0/3"
+
+# EtherChannel mot STUD1 – MÅ AVTALES med STUD1 (gruppe og LACP-modus).
+# Portene er antatt Gi1/0/2-3 (de to andre trunk-portene i IP-planen).
+etherchannel:
+  - gruppe: 1
+    modus: active            # LACP
+    beskrivelse: "EtherChannel til STUD1 ST1-A-SW2"
+    porter:
+      - GigabitEthernet1/0/2
+      - GigabitEthernet1/0/3

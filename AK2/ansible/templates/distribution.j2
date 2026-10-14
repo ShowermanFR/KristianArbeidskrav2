@@ -1,0 +1,41 @@
+! ============================================================
+! Distribution router: {{ inventory_hostname }}
+! Generert av Ansible fra templates/distribution.j2
+! Verdiene hentes fra host_vars/{{ inventory_hostname }}.yml og group_vars/all.yml
+! Management-porten ({{ mgmt_interface }}) er satt av Python-scriptet og røres ikke her.
+! ============================================================
+hostname {{ inventory_hostname }}
+service password-encryption
+!
+{# LAN-porten(e) mot access-switchen. HSRP legges på porten som står i hsrp.interface #}
+{% for port in rutede_porter %}
+interface {{ port.navn }}
+ description {{ port.beskrivelse }}
+ ip address {{ port.ip }} {{ port.maske }}
+{% if port.navn == hsrp.interface %}
+ standby {{ hsrp.gruppe }} ip {{ hsrp.vip }}
+{# Prioritet 100 er standard og vises ikke i configen, så den tas bare med hvis den er noe annet #}
+{% if hsrp.prioritet != 100 %}
+ standby {{ hsrp.gruppe }} priority {{ hsrp.prioritet }}
+{% endif %}
+ standby {{ hsrp.gruppe }} preempt
+{% endif %}
+!
+{% endfor %}
+{# DHCP: begge routerne har samme pool, men ekskluderer hver sin del (delt scope) #}
+{% for ekskl in dhcp.ekskluder %}
+ip dhcp excluded-address {{ ekskl.fra }} {{ ekskl.til }}
+{% endfor %}
+!
+ip dhcp pool {{ dhcp.pool }}
+ network {{ dhcp.nett }} {{ dhcp.maske }}
+ default-router {{ dhcp.gateway }}
+!
+router ospf {{ ospf_prosess }}
+ router-id {{ ospf.router_id }}
+{% for intf in ospf.passive_interfaces %}
+ passive-interface {{ intf }}
+{% endfor %}
+{% for n in ospf.nettverk %}
+ network {{ n.nett }} {{ n.wildcard }} area {{ ospf_area }}
+{% endfor %}

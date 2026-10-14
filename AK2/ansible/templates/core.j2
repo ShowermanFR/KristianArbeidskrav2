@@ -1,0 +1,29 @@
+! ============================================================
+! Core L3-switch: {{ inventory_hostname }}
+! Generert av Ansible fra templates/core.j2
+! Verdiene hentes fra host_vars/{{ inventory_hostname }}.yml og group_vars/all.yml
+! Management-porten ({{ mgmt_interface }}) er satt av Python-scriptet og røres ikke her.
+! ============================================================
+hostname {{ inventory_hostname }}
+service password-encryption
+ip routing
+!
+{# Rutede porter mot routerne – én blokk per port i rutede_porter #}
+{% for port in rutede_porter %}
+interface {{ port.navn }}
+ description {{ port.beskrivelse }}
+ no switchport
+ ip address {{ port.ip }} {{ port.maske }}
+!
+{% endfor %}
+router ospf {{ ospf_prosess }}
+ router-id {{ ospf.router_id }}
+{% if ospf.passive_default %}
+ passive-interface default
+{% for intf in ospf.aktive_interfaces %}
+ no passive-interface {{ intf }}
+{% endfor %}
+{% endif %}
+{% for n in ospf.nettverk %}
+ network {{ n.nett }} {{ n.wildcard }} area {{ ospf_area }}
+{% endfor %}

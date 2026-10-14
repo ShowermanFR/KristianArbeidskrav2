@@ -1,0 +1,42 @@
+---
+# ============================================================
+# ST2-D-RO1 – Distribution router (ISR 4221)
+# ============================================================
+
+# Management-porten mot core. Satt av Python-scriptet.
+# Står her kun som dokumentasjon – playbookene RØRER DEN IKKE.
+mgmt_interface: GigabitEthernet0/0/0   # 10.2.0.2/30, gateway 10.2.0.1
+
+l3_switch: false
+
+# LAN-porten mot ST2-A-SW1 (VLAN 20)
+rutede_porter:
+  - navn: GigabitEthernet0/0/1
+    beskrivelse: "Til ST2-A-SW1 Fa0/1 - VLAN 20"
+    ip: 10.2.20.2
+    maske: 255.255.255.0
+
+hsrp:
+  interface: GigabitEthernet0/0/1
+  gruppe: 20
+  vip: 10.2.20.1
+  prioritet: 110          # høyest = Active
+
+dhcp:
+  pool: VLAN20
+  nett: 10.2.20.0
+  maske: 255.255.255.0
+  gateway: 10.2.20.1      # HSRP-IP-en, så klientene overlever at en router dør
+  # Delt scope: RO1 deler ut .100-.149, resten ekskluderes
+  ekskluder:
+    - { fra: 10.2.20.1,   til: 10.2.20.99 }
+    - { fra: 10.2.20.150, til: 10.2.20.254 }
+
+ospf:
+  router_id: 2.2.2.2
+  nettverk:
+    - { nett: 10.2.0.0,  wildcard: 0.0.0.3 }
+    - { nett: 10.2.20.0, wildcard: 0.0.0.255 }
+  passive_default: false
+  passive_interfaces:
+    - GigabitEthernet0/0/1   # ingen OSPF-naboer mot klientene

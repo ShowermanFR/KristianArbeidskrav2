@@ -1,0 +1,52 @@
+---
+# ============================================================
+# Kjører show-kommandoer for å sjekke at oppsettet virker. Endrer ingenting.
+# ansible-playbook playbooks/verktoy/verifiser.yml -k
+# ============================================================
+- name: Verifiser oppsettet
+  hosts: stud2
+  gather_facts: false
+
+  tasks:
+    - name: Core – interfaces og OSPF
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+          - show ip ospf neighbor
+          - show ip route ospf
+      register: core
+      when: "'core' in group_names"
+
+    - name: Vis core
+      ansible.builtin.debug:
+        var: core.stdout_lines
+      when: "'core' in group_names"
+
+    - name: Distribution – HSRP, DHCP og OSPF
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+          - show standby brief
+          - show ip dhcp pool
+          - show ip ospf neighbor
+      register: router
+      when: "'distribution' in group_names"
+
+    - name: Vis distribution
+      ansible.builtin.debug:
+        var: router.stdout_lines
+      when: "'distribution' in group_names"
+
+    - name: Access – VLAN, trunker og EtherChannel
+      cisco.ios.ios_command:
+        commands:
+          - show vlan brief
+          - show interfaces trunk
+          - show etherchannel summary
+      register: access
+      when: "'access' in group_names"
+
+    - name: Vis access
+      ansible.builtin.debug:
+        var: access.stdout_lines
+      when: "'access' in group_names"

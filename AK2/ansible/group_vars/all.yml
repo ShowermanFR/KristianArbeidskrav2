@@ -1,0 +1,29 @@
+---
+# ============================================================
+# Felles for ALLE enheter
+# ============================================================
+
+# --- Tilkobling ---
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.ios.ios
+ansible_user: cisco
+# paramiko takler de gamle krypteringstypene på eldre Cisco-utstyr
+ansible_network_cli_ssh_type: paramiko
+
+# --- Grunnoppsett ---
+banner_tekst: "Kun autorisert tilgang - STUD2 / AK2"
+
+# --- VLAN-er (avtalt med STUD1) ---
+# Brukes av access-switchene. Navn må være likt på begge sider.
+vlans:
+  - vlan_id: 10
+    name: STUD1-VLAN10
+  - vlan_id: 20
+    name: STUD2-VLAN20
+
+# VLAN-er som skal gå over trunker og EtherChannel
+trunk_vlans: "10,20"
+
+# --- OSPF ---
+ospf_prosess: 1
+ospf_area: 0

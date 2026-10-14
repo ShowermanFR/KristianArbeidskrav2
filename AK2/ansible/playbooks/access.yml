@@ -1,0 +1,63 @@
+---
+# ============================================================
+# Access-switcher – config fra templates/access.j2
+# VLAN-er, access-porter, trunker og EtherChannel.
+#
+# Bare lag configen som fil (sender ingenting, trenger ikke passord):
+#   ansible-playbook playbooks/access.yml --tags generer
+# Se hva som vil endres:
+#   ansible-playbook playbooks/access.yml -k --check --diff
+# Send configen (én switch om gangen med --limit):
+#   ansible-playbook playbooks/access.yml -k --limit ST2-A-SW1
+# ============================================================
+- name: Konfigurer access-switcher
+  hosts: access
+  gather_facts: false
+
+  vars:
+    mal: "{{ playbook_dir }}/../templates/access.j2"
+    generert_mappe: "{{ playbook_dir }}/../generert"
+    # Alle fysiske porter som skal skrus på: access + trunk + EtherChannel-medlemmer
+    alle_porter: >-
+      {{ (access_porter + trunk_porter) | map(attribute='navn') | list
+         + (etherchannel | map(attribute='porter') | flatten) }}
+
+  tasks:
+    - name: Lag configen som fil, så du kan lese den før den sendes
+      ansible.builtin.template:
+        src: "{{ mal }}"
+        dest: "{{ generert_mappe }}/{{ inventory_hostname }}.cfg"
+      delegate_to: localhost
+      check_mode: false   # lag filen også ved --check, den sendes i neste steg
+      tags: [generer]
+
+    - name: Banner
+      cisco.ios.ios_banner:
+        banner: motd
+        text: "{{ banner_tekst }}"
+        state: present
+
+    # VLAN-er lages med egen modul: på switcher i VTP-servermodus vises de ikke
+    # i running-config, og da ville malen meldt "changed" hver eneste gang.
+    - name: Lag VLAN-ene (fra group_vars/all.yml)
+      cisco.ios.ios_vlans:
+        config: "{{ vlans }}"
+        state: merged
+
+    # Vi sender den ferdige filen fra generert/, der variablene allerede er fylt inn.
+    # (Nyere Ansible fyller ikke inn {{ }} i en fil som ios_config leser selv.)
+    - name: Send den genererte configen
+      cisco.ios.ios_config:
+        src: "{{ generert_mappe }}/{{ inventory_hostname }}.cfg"
+
+    - name: Skru på portene (no shutdown)
+      cisco.ios.ios_interfaces:
+        config:
+          - name: "{{ item }}"
+            enabled: true
+        state: merged
+      loop: "{{ alle_porter }}"
+
+    - name: Lagre (write memory) hvis noe er endret
+      cisco.ios.ios_config:
+        save_when: modified

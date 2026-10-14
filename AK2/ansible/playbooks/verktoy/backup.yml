@@ -1,0 +1,16 @@
+---
+# ============================================================
+# Tar backup av running-config fra alle enhetene til backup/<enhet>.cfg
+# ansible-playbook playbooks/verktoy/backup.yml -k
+# ============================================================
+- name: Backup av config
+  hosts: stud2
+  gather_facts: false
+
+  tasks:
+    - name: Lagre running-config til fil
+      cisco.ios.ios_config:
+        backup: true
+        backup_options:
+          dir_path: "{{ playbook_dir }}/../../backup"
+          filename: "{{ inventory_hostname }}.cfg"

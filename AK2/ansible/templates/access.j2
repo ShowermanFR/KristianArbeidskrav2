@@ -1,0 +1,42 @@
+! ============================================================
+! Access switch: {{ inventory_hostname }}
+! Generert av Ansible fra templates/access.j2
+! Verdiene hentes fra host_vars/{{ inventory_hostname }}.yml og group_vars/all.yml
+! Management ({{ mgmt_interface }}) er satt av Python-scriptet og røres ikke her.
+! VLAN-ene lages av egen task i playbooken (ios_vlans), ikke av malen.
+! ============================================================
+hostname {{ inventory_hostname }}
+service password-encryption
+!
+{# Access-porter: én port = ett VLAN (routere og PC-er) #}
+{% for port in access_porter %}
+interface {{ port.navn }}
+ description {{ port.beskrivelse }}
+ switchport mode access
+ switchport access vlan {{ port.vlan }}
+!
+{% endfor %}
+{# Trunk-porter: flere VLAN i samme kabel (mellom switcher) #}
+{% for port in trunk_porter %}
+interface {{ port.navn }}
+ description {{ port.beskrivelse }}
+ switchport mode trunk
+ switchport trunk allowed vlan {{ trunk_vlans }}
+!
+{% endfor %}
+{# EtherChannel: medlemsportene først, så Port-channel-interfacet #}
+{% for ec in etherchannel %}
+{% for medlem in ec.porter %}
+interface {{ medlem }}
+ description Medlem av Port-channel{{ ec.gruppe }}
+ switchport mode trunk
+ switchport trunk allowed vlan {{ trunk_vlans }}
+ channel-group {{ ec.gruppe }} mode {{ ec.modus }}
+!
+{% endfor %}
+interface Port-channel{{ ec.gruppe }}
+ description {{ ec.beskrivelse }}
+ switchport mode trunk
+ switchport trunk allowed vlan {{ trunk_vlans }}
+!
+{% endfor %}
